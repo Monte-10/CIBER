@@ -11,9 +11,11 @@ La clave privada tiene 4096 bits.
 aes256 es un método para cifrar.
 
 ## 2.1. Firma de archivos
-Para cifrar:
+Para firmar:
 
 openssl dgst -sha256 -sign [fichero con clave privada del emisor] -out [fichero firmado] [fichero a firmar]
+
+Para comprobar la firma:
 
 openssl dgst -sha256 -verify [fichero con clave publica del emisor] -signature [fichero firmado] [fichero a firmar]
 
