@@ -24,9 +24,10 @@ def load_data():
 def save_data(data):
     """Cifra y guarda el archivo JSON con los datos de los contenedores."""
     key = load_key()  # Asume una implementación existente que carga la clave
-    encrypted_data = encrypt_data(json.dumps(data), key)
-    with open(FILE_NAME, 'wb') as encrypted_file:
+    encrypted_data = encrypt_data(json.dumps(data), key)  # Asume que devuelve una cadena en base64
+    with open(FILE_NAME, 'w') as encrypted_file:  # Abre como texto
         encrypted_file.write(encrypted_data)
+
 
 # Ejemplo de uso
 if __name__ == "__main__":
