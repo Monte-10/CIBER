@@ -6,31 +6,30 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.fernet import Fernet
 import os
 import base64
+from cryptography.fernet import Fernet
 
-def generate_key(password_provided):
-    """Genera una clave de cifrado a partir de una contraseña."""
-    password = password_provided.encode()  # Convert to type bytes
-    salt = os.urandom(16)  # Cambiar por un salt fijo si necesitas desencriptar sin tener el mismo entorno de ejecución
-    kdf = PBKDF2HMAC(
-        algorithm=hashes.SHA256(),
-        length=32,
-        salt=salt,
-        iterations=100000,
-        backend=default_backend()
-    )
-    key = base64.urlsafe_b64encode(kdf.derive(password))  # Can only use kdf once
-    return key, salt
+def generate_key():
+    """Genera y retorna una nueva clave de cifrado Fernet."""
+    return Fernet.generate_key()
 
-def encrypt_data(data, key):
-    """Cifra los datos proporcionados con la clave proporcionada."""
+def save_key(key):
+    with open('vault.key', 'wb') as key_file:
+        key_file.write(key)
+
+def load_key():
+    """Carga la clave de cifrado desde 'vault.key'."""
+    with open('vault.key', 'rb') as key_file:
+        return key_file.read()
+
+def encrypt_data(data: str, key: bytes) -> str:
     f = Fernet(key)
     encrypted_data = f.encrypt(data.encode())
-    return encrypted_data
+    return base64.urlsafe_b64encode(encrypted_data).decode()
 
-def decrypt_data(encrypted_data, key):
-    """Descifra los datos proporcionados con la clave proporcionada."""
+def decrypt_data(encrypted_data: str, key: bytes) -> str:
     f = Fernet(key)
-    decrypted_data = f.decrypt(encrypted_data)
+    decoded_data = base64.urlsafe_b64decode(encrypted_data.encode())
+    decrypted_data = f.decrypt(decoded_data)
     return decrypted_data.decode()
 
 # Ejemplo de uso

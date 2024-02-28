@@ -1,41 +1,35 @@
 import storage
+from encryption import encrypt_data, decrypt_data
+import json
 
-def create_container():
+def create_container(vault, key):
     name = input("Nombre del contenedor: ")
     content = input("Contenido del contenedor: ")
-    # Aquí deberías cifrar el contenido antes de guardarlo
-    data = storage.load_data()
-    data[name] = content  # Asegúrate de cifrar este contenido
-    storage.save_data(data)
-    print("Contenedor creado.")
+    encrypted_content = encrypt_data(content, key)
+    vault[name] = encrypted_content
+    storage.save_data(vault)  # Ajustado para pasar solo el vault
 
-def edit_container():
+def edit_container(vault, key):
     name = input("Nombre del contenedor a editar: ")
-    data = storage.load_data()
-    if name in data:
+    if name in vault:
         content = input("Nuevo contenido del contenedor: ")
-        # Aquí deberías cifrar el contenido antes de guardarlo
-        data[name] = content  # Asegúrate de cifrar este contenido
-        storage.save_data(data)
-        print("Contenedor actualizado.")
+        encrypted_content = encrypt_data(content, key)
+        vault[name] = encrypted_content
+        storage.save_data(vault)
     else:
         print("Contenedor no encontrado.")
 
-def delete_container():
-    name = input("Nombre del contenedor a borrar: ")
-    data = storage.load_data()
-    if name in data:
-        del data[name]
-        storage.save_data(data)
-        print("Contenedor borrado.")
+def delete_container(vault, name):
+    if name in vault:
+        del vault[name]
+        storage.save_data(vault)
     else:
         print("Contenedor no encontrado.")
 
-def view_container():
-    name = input("Nombre del contenedor a visualizar: ")
-    data = storage.load_data()
-    if name in data:
-        # Aquí deberías descifrar el contenido antes de mostrarlo
-        print(f"Contenido: {data[name]}")  # Asegúrate de descifrar este contenido
+def view_container(vault, key, name):
+    if name in vault:
+        encrypted_content = vault[name]
+        content = decrypt_data(encrypted_content, key)
+        print(f"Contenido: {content}")
     else:
         print("Contenedor no encontrado.")

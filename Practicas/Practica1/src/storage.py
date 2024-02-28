@@ -5,20 +5,25 @@ from encryption import encrypt_data, decrypt_data, generate_key
 FILE_NAME = "secure_data.json"
 PASSWORD = "mi_super_secreto"
 
+import os
+from encryption import encrypt_data, decrypt_data, load_key  # Asegúrate de que load_key() esté definida para cargar la clave desde un archivo
+
+from encryption import load_key, encrypt_data, decrypt_data
+
 def load_data():
     """Carga y descifra el archivo JSON con los datos de los contenedores."""
     try:
-        key, _ = generate_key(PASSWORD)  # Asumimos que el salt no es necesario para este ejemplo
+        key = load_key()  # Asume una implementación existente que carga la clave
         with open(FILE_NAME, 'rb') as encrypted_file:
             encrypted_data = encrypted_file.read()
-            decrypted_data = decrypt_data(encrypted_data, key)
-            return json.loads(decrypted_data)
+        decrypted_data = decrypt_data(encrypted_data, key)
+        return json.loads(decrypted_data)
     except FileNotFoundError:
-        return {}  # Si el archivo no existe, retorna un diccionario vacío
+        return {}
 
 def save_data(data):
     """Cifra y guarda el archivo JSON con los datos de los contenedores."""
-    key, _ = generate_key(PASSWORD)
+    key = load_key()  # Asume una implementación existente que carga la clave
     encrypted_data = encrypt_data(json.dumps(data), key)
     with open(FILE_NAME, 'wb') as encrypted_file:
         encrypted_file.write(encrypted_data)
