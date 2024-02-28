@@ -23,14 +23,14 @@ def load_key():
 
 def encrypt_data(data: str, key: bytes) -> str:
     f = Fernet(key)
-    encrypted_data = f.encrypt(data.encode())
-    return base64.urlsafe_b64encode(encrypted_data).decode()
+    encrypted_data = f.encrypt(data.encode())  # Convierte str a bytes y luego cifra
+    return base64.urlsafe_b64encode(encrypted_data).decode()  # Convierte bytes cifrados a str base64
 
 def decrypt_data(encrypted_data: str, key: bytes) -> str:
     f = Fernet(key)
-    decoded_data = base64.urlsafe_b64decode(encrypted_data.encode())
-    decrypted_data = f.decrypt(decoded_data)
-    return decrypted_data.decode()
+    bytes_data = base64.urlsafe_b64decode(encrypted_data)  # Convierte str base64 a bytes
+    decrypted_data = f.decrypt(bytes_data)
+    return decrypted_data.decode()  # Convierte bytes descifrados a str
 
 # Ejemplo de uso
 if __name__ == "__main__":

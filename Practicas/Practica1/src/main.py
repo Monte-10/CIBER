@@ -55,8 +55,8 @@ def main():
     if not auth.verify_password(password):
         print("Contraseña incorrecta.")
         return
-    
-    vault = None
+
+    vault = None  # Inicializa vault aquí
     try:
         vault = load_or_create_vault(key)
         if vault is None:
@@ -64,7 +64,8 @@ def main():
             return
     except Exception as e:
         print(f"Error al manejar el vault: {e}")
-        return  # Asegúrate de salir si hay un error
+        return  # Asegúrate de salir si no se puede cargar el vault
+
 
     # Continuar solo si `vault` fue cargado correctamente
     if vault is not None:
