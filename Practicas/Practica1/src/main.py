@@ -2,41 +2,61 @@ import os
 import json
 from getpass import getpass
 import encryption
-from encryption import encrypt_data, decrypt_data, load_key, save_key
+from encryption import *
 import containers
 from cryptography.fernet import Fernet
 
 DATA_FILE = 'vault.json'
 KEY_FILE = 'vault.key'
 PASSWORD_FILE = 'password.key'
+SALT_FILE = 'salt.key'
+TEST_VALUE_FILE = 'test_value.key'
 
+SALT_FILE = 'salt.key'
+TEST_VALUE_FILE = 'test_value.key'
+TEST_VALUE = b"SecureBoxTest"  # Valor de prueba para cifrar y luego verificar
 
 def initialize_system():
-    # Verifica si existe la clave de cifrado, si no, la genera y guarda
-    if not os.path.exists(KEY_FILE):
-        key = Fernet.generate_key()
-        with open(KEY_FILE, 'wb') as key_file:
-            key_file.write(key)
-    else:
-        with open(KEY_FILE, 'rb') as key_file:
-            key = key_file.read()
+    if not os.path.exists(SALT_FILE) or not os.path.exists(TEST_VALUE_FILE):
+        # Configuración inicial
+        password = getpass("Establece una contraseña para SecureBox: ")
+        password_confirm = getpass("Confirma tu contraseña: ")
+        if password != password_confirm:
+            print("Las contraseñas no coinciden. Intenta nuevamente.")
+            exit()
 
-    # Si es la primera ejecución, solicita al usuario que establezca una contraseña
-    if not os.path.exists(PASSWORD_FILE):
-        while True:
-            password = getpass("Establece una contraseña para SecureBox: ")
-            password_confirm = getpass("Confirma tu contraseña: ")
-            if password == password_confirm:
-                break
-            else:
-                print("Las contraseñas no coinciden. Intenta nuevamente.")
+        salt = os.urandom(16)
+        with open(SALT_FILE, 'wb') as salt_file:
+            salt_file.write(salt)
         
-        # Cifra y guarda la contraseña establecida
-        encrypted_password = encrypt_data(password, key)
-        with open(PASSWORD_FILE, 'w') as file:  # Guarda como texto la contraseña cifrada
-            file.write(encrypted_password)
+        key = derive_key(password, salt)
+        f = Fernet(key)
+        encrypted_test_value = f.encrypt(TEST_VALUE)
+        with open(TEST_VALUE_FILE, 'wb') as test_file:
+            test_file.write(encrypted_test_value)
+
+        print("Configuración inicial completada.")
+    else:
+        # Verificación durante los inicios de sesión posteriores
+        salt = open(SALT_FILE, 'rb').read()
+        password = getpass("Introduce tu contraseña para acceder a SecureBox: ")
+        key = derive_key(password, salt)
+        if not verify_access(key):
+            print("Acceso denegado. La contraseña es incorrecta.")
+            exit()
     
     return key
+
+def verify_access(key):
+    try:
+        with open(TEST_VALUE_FILE, 'rb') as test_file:
+            encrypted_test_value = test_file.read()
+        f = Fernet(key)
+        decrypted_test_value = f.decrypt(encrypted_test_value)
+        return decrypted_test_value == TEST_VALUE
+    except Exception as e:
+        print(f"Acceso denegado. No se pudo verificar la contraseña. {e}")
+        return False
 
 def verify_password(input_password, key):
     """Verifica que la contraseña ingresada sea correcta."""
@@ -70,17 +90,11 @@ def load_or_create_vault(key):
 def main():
     key = initialize_system()
     
-    # Intenta verificar la contraseña hasta un máximo de intentos permitidos
-    attempts = 3
-    for _ in range(attempts):
-        password_attempt = getpass("Por favor, introduce tu contraseña para acceder: ")
-        if verify_password(password_attempt, key):
-            print("Bienvenido a SecureBox")
-            break
-        else:
-            print("Contraseña incorrecta.")
+    if verify_access(key):
+        print("¡Bienvenido a SecureBox!")
+        # Continuar con la lógica del programa
     else:
-        print("Número máximo de intentos alcanzado. Acceso denegado.")
+        print("Acceso denegado. La contraseña es incorrecta.")
         return
 
     # Carga o crea el vault
@@ -100,7 +114,9 @@ def main():
         print("2. Editar contenedor")
         print("3. Borrar contenedor")
         print("4. Visualizar contenedor")
-        print("5. Salir")
+        print("5. Listar todos los contenedores")
+        print("6. Guardar cambios y salir")
+        print("7. Salir sin guardar")
         choice = input("Selecciona una opción: ")
 
         if choice == "1":
@@ -108,12 +124,17 @@ def main():
         elif choice == "2":
             containers.edit_container(vault, key)
         elif choice == "3":
-            containers.delete_container(vault, key)
+            container_name = input("Introduce el nombre del contenedor que deseas borrar: ")
+            containers.delete_container(vault, key, container_name)
         elif choice == "4":
-            containers.view_container(vault)
+            container_name = input("Introduce el nombre del contenedor que deseas visualizar: ")
+            containers.view_container(vault, key, container_name)
         elif choice == "5":
+            containers.list_containers(vault)
+        elif choice == "6":
+            save_vault_changes(vault, key)
             print("Saliendo...")
-            break
+            exit()
         else:
             print("Opción no válida. Por favor, intenta de nuevo.")
 

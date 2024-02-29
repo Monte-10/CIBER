@@ -1,0 +1,23 @@
+1. Inicialización y Configuración del Sistema
+Establecimiento de Contraseña: Al iniciar la aplicación por primera vez, se solicita al usuario que establezca una contraseña. Esta contraseña se utilizará para derivar una clave de cifrado.
+
+Generación de Sal: Se genera una "sal" aleatoria que se utilizará junto con la contraseña para derivar la clave de cifrado. Esto ayuda a proteger contra ataques de diccionario y rainbow tables.
+
+Derivación de Clave: Utilizando la contraseña y la sal, se deriva una clave de cifrado a través de una función de derivación de claves, como PBKDF2HMAC, utilizando SHA-256 como algoritmo de hash. Esta clave se codifica en base64 para su uso con Fernet.
+
+Cifrado de Valor de Prueba: Se cifra un valor de prueba (por ejemplo, TEST_VALUE) con la clave derivada y se guarda. Esto servirá para verificar la contraseña en futuros accesos.
+
+2. Acceso y Verificación
+Verificación de Contraseña: En los accesos posteriores, el usuario introduce su contraseña. Se repite el proceso de derivación de clave utilizando la misma sal almacenada. Se intenta descifrar el valor de prueba cifrado; si el descifrado es exitoso y coincide con el valor original, la contraseña es correcta.
+3. Manejo del Vault
+Cifrado de Contenedores: Al crear o editar contenedores, el contenido de cada contenedor se cifra utilizando la clave derivada. Adicionalmente, se puede generar una firma utilizando SHA-256 basada en el nombre y el contenido del contenedor para mayor integridad.
+
+Almacenamiento del Vault: Los contenedores cifrados se almacenan en una estructura de datos (por ejemplo, un diccionario en Python), que luego se serializa a JSON y se cifra en su totalidad antes de guardarse en el archivo del vault.
+
+4. Guardado y Carga del Vault
+Guardado de Cambios: Cuando el usuario decide guardar los cambios y salir, el vault completo (ya cifrado) se guarda en el archivo especificado. Se puede volver a derivar una clave de cifrado utilizando la contraseña del usuario y potencialmente datos adicionales (como el hash del contenido del vault) para este paso.
+
+Carga del Vault: Al iniciar la aplicación, después de verificar la contraseña del usuario, el vault cifrado se carga desde el archivo, se descifra utilizando la clave derivada, y se deserializa de JSON a la estructura de datos original para su uso en la aplicación.
+
+5. Consideraciones de Seguridad
+Este enfoque asegura que la información sensible dentro del vault esté protegida tanto en reposo como durante su uso, con la clave de cifrado nunca almacenada directamente, sino derivada de la contraseña del usuario cada vez que se necesita. La utilización de sal y funciones de derivación de claves robustas ayuda a proteger contra ataques de fuerza bruta y otros vectores de ataque comunes en la gestión de contraseñas y claves.
