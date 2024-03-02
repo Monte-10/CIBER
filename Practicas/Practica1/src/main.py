@@ -5,6 +5,8 @@ import encryption
 from encryption import *
 import containers
 from cryptography.fernet import Fernet
+import google_drive_integration
+from google_drive_integration import *
 
 DATA_FILE = 'vault.json'
 KEY_FILE = 'vault.key'
@@ -86,7 +88,6 @@ def load_or_create_vault(key):
             print(f"No se pudo cargar el vault debido a un error: {e}")
             return None
 
-
 def main():
     key = initialize_system()
     
@@ -116,7 +117,8 @@ def main():
         print("4. Visualizar contenedor")
         print("5. Listar todos los contenedores")
         print("6. Guardar cambios y salir")
-        print("7. Salir sin guardar")
+        print("7. Subir copia de seguridad a Google Drive")
+        print("8. Recuperar copia de seguridad de Google Drive")
         choice = input("Selecciona una opción: ")
 
         if choice == "1":
@@ -135,6 +137,18 @@ def main():
             save_vault_changes(vault, key)
             print("Saliendo...")
             exit()
+        elif choice == "7":
+            try:
+                # Autenticar al usuario y obtener el servicio de Google Drive
+                service = authenticate_google_drive()
+                # Definir el nombre del archivo y el tipo MIME
+                file_path = "vault.json"
+                mime_type = "application/json"
+                # Subir el archivo
+                upload_file(service, file_path, mime_type)
+            except Exception as e:
+                print(f"Error al subir la copia de seguridad: {e}")
+
         else:
             print("Opción no válida. Por favor, intenta de nuevo.")
 
