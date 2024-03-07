@@ -5,13 +5,7 @@ from googleapiclient.http import MediaIoBaseDownload
 import io
 import json
 
-# Define el alcance de la aplicación
 SCOPES = ['https://www.googleapis.com/auth/drive.file']
-
-def authenticate_user():
-    flow = InstalledAppFlow.from_client_secrets_file('credentials.json', SCOPES)
-    credentials = flow.run_local_server(port=0)  # Abre una ventana del navegador para la autenticación
-    return credentials
 
 def authenticate_google_drive():
     """

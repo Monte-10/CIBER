@@ -5,7 +5,6 @@ import encryption
 from encryption import *
 import containers
 from cryptography.fernet import Fernet
-import google_drive_integration
 from google_drive_integration import *
 
 DATA_FILE = 'vault.json'
@@ -93,7 +92,7 @@ def main():
     
     if verify_access(key):
         print("¡Bienvenido a SecureBox!")
-        # Continuar con la lógica del programa
+        # Se concede acceso
     else:
         print("Acceso denegado. La contraseña es incorrecta.")
         return
@@ -118,7 +117,6 @@ def main():
         print("5. Listar todos los contenedores")
         print("6. Guardar cambios y salir")
         print("7. Subir copia de seguridad a Google Drive")
-        print("8. Recuperar copia de seguridad de Google Drive")
         choice = input("Selecciona una opción: ")
 
         if choice == "1":
@@ -127,7 +125,7 @@ def main():
             containers.edit_container(vault, key)
         elif choice == "3":
             container_name = input("Introduce el nombre del contenedor que deseas borrar: ")
-            containers.delete_container(vault, key, container_name)
+            containers.delete_container(vault, container_name)
         elif choice == "4":
             container_name = input("Introduce el nombre del contenedor que deseas visualizar: ")
             containers.view_container(vault, key, container_name)

@@ -6,6 +6,8 @@ import os
 import base64
 from hashlib import sha256
 import json
+from tkinter import simpledialog, Tk
+
 SALT_FILE = 'salt.key'
 
 def generate_key():
