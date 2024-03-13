@@ -18,6 +18,14 @@ TEST_VALUE_FILE = 'test_value.key'
 TEST_VALUE = b"SecureBoxTest"  # Valor de prueba para cifrar y luego verificar
 
 def initialize_system():
+    """
+    Inicializa el sistema verificando si existen archivos clave y, si no, crea una nueva configuración.
+    Solicita al usuario que establezca una contraseña para SecureBox si es la primera vez,
+    o verifica la contraseña ingresada contra la existente en los inicios de sesión posteriores.
+
+    Returns:
+        key (bytes): La clave de cifrado derivada de la contraseña del usuario.
+    """
     if not os.path.exists(SALT_FILE) or not os.path.exists(TEST_VALUE_FILE):
         # Configuración inicial
         password = getpass("Establece una contraseña para SecureBox: ")
@@ -49,6 +57,16 @@ def initialize_system():
     return key
 
 def verify_access(key):
+    """
+    Verifica si la clave proporcionada puede descifrar un valor de prueba almacenado,
+    lo que indica que el usuario ingresó la contraseña correcta.
+
+    Args:
+        key (bytes): La clave de cifrado derivada de la contraseña del usuario.
+
+    Returns:
+        bool: True si la clave es correcta y el valor de prueba se descifra exitosamente, False en caso contrario.
+    """
     try:
         with open(TEST_VALUE_FILE, 'rb') as test_file:
             encrypted_test_value = test_file.read()
@@ -60,20 +78,45 @@ def verify_access(key):
         return False
 
 def verify_password(input_password, key):
-    """Verifica que la contraseña ingresada sea correcta."""
+    """
+    Compara la contraseña ingresada por el usuario con la contraseña almacenada y cifrada.
+
+    Args:
+        input_password (str): La contraseña ingresada por el usuario.
+        key (bytes): La clave de cifrado utilizada para descifrar la contraseña almacenada.
+
+    Returns:
+        bool: True si las contraseñas coinciden, False en caso contrario.
+    """
     with open(PASSWORD_FILE, 'r') as file:
         encrypted_password = file.read()
     decrypted_password = decrypt_data(encrypted_password, key)
     return input_password == decrypted_password
 
 def save_password(password, key):
-    """Cifra y guarda la contraseña."""
+    """
+    Cifra y almacena la contraseña del usuario.
+
+    Args:
+        password (str): La contraseña del usuario.
+        key (bytes): La clave de cifrado utilizada para cifrar la contraseña.
+    """
     f = Fernet(key)
     encrypted_password = f.encrypt(password.encode())
     with open(PASSWORD_FILE, 'wb') as file:
         file.write(encrypted_password)
 
 def load_or_create_vault(key):
+    """
+    Carga el vault existente o crea uno nuevo si no existe.
+    Si el archivo del vault está vacío o no existe, se crea un nuevo vault vacío.
+
+    Args:
+        key (bytes): La clave de cifrado utilizada para descifrar el contenido del vault.
+
+    Returns:
+        dict: El vault cargado o un nuevo vault vacío.
+    """
     if not os.path.exists(DATA_FILE) or os.stat(DATA_FILE).st_size == 0:
         print("El archivo del vault no existe o está vacío, creando un nuevo vault.")
         return {}

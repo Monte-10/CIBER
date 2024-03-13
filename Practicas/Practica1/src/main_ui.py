@@ -9,6 +9,15 @@ import containers_ui
 
 class SecureBoxUI:
     def __init__(self, master):
+        """
+        Inicializa la interfaz de usuario de SecureBox.
+
+        Args:
+            master: La ventana principal de la interfaz de usuario.
+
+        Este método configura la ventana principal, inicializa la clave de cifrado y el vault,
+        y crea los elementos de la interfaz como botones y etiquetas.
+        """
         self.master = master
         master.title("SecureBox")
         
@@ -48,6 +57,9 @@ class SecureBoxUI:
         self.quit_button.pack()
 
     def create_container(self):
+        """
+        Solicita al usuario el nombre y contenido para un nuevo contenedor, luego lo crea y actualiza el vault.
+        """
         name = simpledialog.askstring("Input", "Nombre del contenedor:", parent=self.master)
         content = simpledialog.askstring("Input", "Contenido del contenedor:", parent=self.master)
         if name and content:
@@ -58,6 +70,9 @@ class SecureBoxUI:
             messagebox.showerror("Error", "Debe proporcionar tanto el nombre como el contenido para el contenedor.")
 
     def edit_container(self):
+        """
+        Permite al usuario editar el contenido de un contenedor existente mediante su nombre.
+        """
         name = simpledialog.askstring("Input", "Nombre del contenedor a editar:", parent=self.master)
         if name in self.vault:
             content = simpledialog.askstring("Input", "Nuevo contenido del contenedor:", parent=self.master)
@@ -69,6 +84,9 @@ class SecureBoxUI:
                 messagebox.showerror("Error", "Debe proporcionar el contenido para el contenedor.")
 
     def delete_container(self):
+        """
+        Elimina un contenedor específico del vault.
+        """
         name = simpledialog.askstring("Input", "Nombre del contenedor a borrar:", parent=self.master)
         if name in self.vault:
             containers_ui.delete_container_ui(self.vault, self.key, name)
@@ -78,6 +96,9 @@ class SecureBoxUI:
             messagebox.showerror("Error", "Contenedor no encontrado.")
 
     def view_container(self):
+        """
+        Muestra el contenido de un contenedor específico.
+        """
         name = simpledialog.askstring("Input", "Nombre del contenedor a visualizar:", parent=self.master)
         if name and name in self.vault:
             containers_ui.view_container_ui(self.vault, self.key, name)
@@ -85,9 +106,15 @@ class SecureBoxUI:
             messagebox.showerror("Error", "Contenedor no encontrado.")
 
     def list_containers(self):
+        """
+        Lista todos los contenedores existentes en el vault.
+        """
         containers_ui.list_containers_ui(self.vault)
 
     def upload_backup(self):
+        """
+        Sube una copia de seguridad del vault actual a Google Drive.
+        """
         try:
             service = gdrive.authenticate_google_drive()
             file_path = "vault.json"
@@ -98,6 +125,9 @@ class SecureBoxUI:
             messagebox.showerror("Error", f"No se pudo subir la copia de seguridad: {e}")
 
     def save_vault(self):
+        """
+        Guarda los cambios realizados en el vault.
+        """
         # Guarda el vault actualizado utilizando la clave
         try:
             encryption.save_vault_changes(self.vault, self.key)

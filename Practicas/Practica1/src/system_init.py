@@ -1,4 +1,3 @@
-# system_init.py
 import tkinter as tk
 from tkinter import simpledialog, messagebox
 import json
@@ -15,7 +14,13 @@ TEST_VALUE = b"SecureBoxTest"
 
 def initialize_system_gui(parent):
     """
-    Inicializa el sistema con interacción de usuario a través de una interfaz gráfica.
+    Inicializa el sistema de seguridad mediante una interfaz gráfica de usuario (GUI), solicitando una contraseña.
+
+    Args:
+    - parent: El widget de tkinter que actúa como contenedor padre para los diálogos de entrada y mensajes.
+
+    Returns:
+    - La clave derivada a partir de la contraseña introducida, o None si el proceso no se completa satisfactoriamente.
     """
     from tkinter import simpledialog, messagebox
     import os
@@ -70,7 +75,14 @@ def initialize_system_gui(parent):
 
 def load_or_create_vault_gui(key, parent):
     """
-    Carga o crea el vault y lo retorna. La función interactúa con el usuario mediante GUI.
+    Carga el vault cifrado desde un archivo, o crea uno nuevo si no existe o está vacío.
+
+    Args:
+    - key: La clave utilizada para cifrar/descifrar el vault.
+    - parent: El widget de tkinter que actúa como contenedor padre para los mensajes de error.
+
+    Returns:
+    - Un diccionario representando el vault cargado o un nuevo vault vacío, o None si ocurre un error.
     """
     if not os.path.exists(DATA_FILE) or os.stat(DATA_FILE).st_size == 0:
         vault = {}
@@ -88,6 +100,16 @@ def load_or_create_vault_gui(key, parent):
     return vault
 
 def save_vault_changes(vault, key):
+    """
+    Cifra y guarda el vault actualizado en un archivo utilizando la clave proporcionada.
+
+    Args:
+    - vault: El diccionario que representa el vault a guardar.
+    - key: La clave utilizada para cifrar el vault.
+
+    Raises:
+    - Muestra un mensaje de error a través de la GUI si ocurre un error durante el guardado.
+    """
     try:
         encrypted_vault = encrypt_data(json.dumps(vault), key)
         with open(ENCRYPTED_VAULT_FILE, 'wb') as file:

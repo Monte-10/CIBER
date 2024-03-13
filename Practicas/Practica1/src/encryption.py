@@ -10,24 +10,39 @@ from tkinter import simpledialog, Tk
 
 SALT_FILE = 'salt.key'
 
-def generate_key():
-    """Genera y retorna una nueva clave de cifrado Fernet."""
-    return Fernet.generate_key()
-
 def save_key(key):
-    """Guarda la clave de cifrado en 'vault.key'."""
+    """
+    Guarda la clave de cifrado Fernet en un archivo.
+
+    Args:
+    - key (bytes): La clave Fernet a guardar.
+    """
     with open('vault.key', 'wb') as key_file:
         key_file.write(key)
     print("Clave guardada exitosamente.")
 
 def load_key():
-    """Carga la clave de cifrado desde 'vault.key'."""
+    """
+    Carga la clave de cifrado Fernet desde un archivo.
+
+    Returns:
+    - key (bytes): La clave Fernet cargada.
+    """
     with open('vault.key', 'rb') as key_file:
         key = key_file.read()
     return key
 
 def derive_key(password: str, salt: bytes) -> bytes:
-    """Deriva una clave segura a partir de una contraseña y una sal."""
+    """
+    Deriva una clave Fernet segura a partir de una contraseña dada y una sal.
+
+    Args:
+    - password (str): La contraseña para derivar la clave.
+    - salt (bytes): La sal para usar en la derivación de clave.
+
+    Returns:
+    - key (bytes): La clave Fernet derivada.
+    """
     kdf = PBKDF2HMAC(
         algorithm=hashes.SHA256(),
         length=32,
@@ -39,26 +54,63 @@ def derive_key(password: str, salt: bytes) -> bytes:
     return base64.urlsafe_b64encode(key)  # La pasa a formato base64
 
 def encrypt_data(data: str, key: bytes) -> str:
-    """Cifra los datos y devuelve una cadena codificada en base64."""
+    """
+    Cifra los datos dados y devuelve el resultado en base64.
+
+    Args:
+    - data (str): Los datos a cifrar.
+    - key (bytes): La clave Fernet para cifrar los datos.
+
+    Returns:
+    - encrypted_data (str): Los datos cifrados codificados en base64.
+    """
     f = Fernet(key)
     encrypted_data = f.encrypt(data.encode('utf-8'))
     return base64.urlsafe_b64encode(encrypted_data).decode('utf-8')
 
 def decrypt_data(encrypted_data_str: str, key: bytes) -> str:
-    """Descifra los datos de una cadena en base64 y devuelve la cadena original."""
+    """
+    Descifra los datos dados desde una cadena en base64 y devuelve la cadena original.
+
+    Args:
+    - encrypted_data_str (str): Los datos cifrados en base64.
+    - key (bytes): La clave Fernet para descifrar los datos.
+
+    Returns:
+    - decrypted_data (str): Los datos descifrados como cadena UTF-8.
+    """
     f = Fernet(key)
     encrypted_data_bytes = base64.urlsafe_b64decode(encrypted_data_str)  # Decodifica de Base64 a bytes
     decrypted_data_bytes = f.decrypt(encrypted_data_bytes)
     return decrypted_data_bytes.decode('utf-8')
 
 def generate_container_signature(name, content):
-    """Genera una firma utilizando SHA-256 basada en el nombre y el contenido del contenedor."""
+    """
+    Genera una firma basada en SHA-256 utilizando el nombre y el contenido del contenedor.
+
+    Args:
+    - name (str): El nombre del contenedor.
+    - content (str): El contenido del contenedor.
+
+    Returns:
+    - signature (str): La firma generada.
+    """
     signature_input = f"{name}{content}".encode('utf-8')
     signature = sha256(signature_input).hexdigest()
     return signature
 
 def encrypt_container(name, content, key):
-    """Cifra el contenido del contenedor y su firma, devolviendo una cadena Base64."""
+    """
+    Cifra el contenido de un contenedor, incluida su firma, y devuelve el resultado en Base64.
+
+    Args:
+    - name (str): El nombre del contenedor.
+    - content (str): El contenido del contenedor.
+    - key (bytes): La clave Fernet para cifrar el contenedor.
+
+    Returns:
+    - encrypted_data (str): El contenedor cifrado en base64.
+    """
     signature = generate_container_signature(name, content)
     data_to_encrypt = json.dumps({"content": content, "signature": signature})
     f = Fernet(key)
@@ -67,7 +119,19 @@ def encrypt_container(name, content, key):
     return base64.urlsafe_b64encode(encrypted_data).decode('utf-8')
 
 def derive_encryption_key(password: str, salt: bytes, vault):
-    """Deriva una clave segura a partir de la contraseña y el contenido del vault."""
+    """
+    Deriva una clave segura a partir de la contraseña, el contenido del vault, y una sal. La función utiliza 
+    el hash del contenido del vault como parte de la entrada para la derivación de la clave, añadiendo una capa 
+    adicional de seguridad al asegurar que la clave sea única no solo a la contraseña, sino también al contenido actual.
+
+    Args:
+    - password (str): La contraseña proporcionada por el usuario.
+    - salt (bytes): La sal utilizada para la derivación de la clave.
+    - vault (dict): El vault actual cuyo contenido se utiliza en la derivación de la clave.
+
+    Returns:
+    - key (bytes): La clave derivada en formato adecuado para su uso con Fernet.
+    """
     # Convierte contraseña a bytes
     if isinstance(password, str):
         password_bytes = password.encode('utf-8')
@@ -96,7 +160,14 @@ def derive_encryption_key(password: str, salt: bytes, vault):
 
 def save_vault_changes(vault, password):
     """
-    Cifra y guarda el vault utilizando una clave derivada de la contraseña del usuario y el contenido del vault.
+    Cifra y guarda el estado actual del vault en un archivo, utilizando una clave derivada que incluye 
+    la contraseña del usuario y el contenido actual del vault. Esto garantiza que el vault solo pueda ser 
+    descifrado con el conocimiento de la contraseña correcta y cuando el contenido del vault coincide con 
+    el estado cuando fue cifrado.
+
+    Args:
+    - vault (dict): El vault a ser guardado.
+    - password (str): La contraseña utilizada para derivar la clave de cifrado.
     """
     # Intenta cargar la sal existente o genera una nueva
     if os.path.exists(SALT_FILE):
@@ -122,7 +193,15 @@ def save_vault_changes(vault, password):
 
 def load_vault_changes(password):
     """
-    Descifra y carga el vault utilizando la clave derivada de la contraseña del usuario y el contenido del vault.
+    Descifra y carga el vault cifrado desde un archivo, utilizando una clave derivada basada en la contraseña 
+    proporcionada y el contenido esperado del vault. Si el contenido ha cambiado o la contraseña es incorrecta, 
+    el proceso de descifrado fallará, protegiendo contra accesos no autorizados.
+
+    Args:
+    - password (str): La contraseña proporcionada por el usuario para descifrar el vault.
+
+    Returns:
+    - vault (dict): El vault descifrado y cargado como un diccionario.
     """
     with open(SALT_FILE, 'rb') as salt_file:
         save_salt = salt_file.read()
@@ -144,6 +223,11 @@ def load_vault_changes(password):
     return json.loads(decrypted_vault)
 
 # Sección de prueba
+
+def generate_key():
+    """Genera y retorna una nueva clave de cifrado Fernet."""
+    return Fernet.generate_key()
+
 if __name__ == "__main__":
     key = generate_key()
     save_key(key)

@@ -9,7 +9,12 @@ SCOPES = ['https://www.googleapis.com/auth/drive.file']
 
 def authenticate_google_drive():
     """
-    Autentica al usuario con Google Drive y devuelve un objeto de servicio.
+    Esta función autentica al usuario con Google Drive utilizando OAuth 2.0. Usa las credenciales almacenadas en 
+    'credentials.json' para solicitar el acceso. Abre una nueva ventana del navegador para que el usuario inicie sesión 
+    en su cuenta de Google y autorice a la aplicación a acceder a su Google Drive.
+
+    Returns:
+        service (Resource): Un objeto de servicio de la API de Google Drive que se utiliza para hacer solicitudes a la API.
     """
     flow = InstalledAppFlow.from_client_secrets_file(
         'credentials.json', SCOPES)
@@ -22,7 +27,16 @@ def authenticate_google_drive():
 
 def upload_file(service, file_name, mime_type, folder_id=None):
     """
-    Sube un archivo a Google Drive en una carpeta específica.
+    Sube un archivo local a Google Drive. Opcionalmente, permite especificar una carpeta de destino mediante su ID.
+
+    Args:
+        service (Resource): El objeto de servicio obtenido de authenticate_google_drive().
+        file_name (str): El nombre del archivo local a subir.
+        mime_type (str): El tipo MIME del archivo, que indica el formato de archivo.
+        folder_id (str, optional): El ID de la carpeta de Google Drive donde se subirá el archivo. None por defecto.
+
+    Prints:
+        Un mensaje confirmando la subida exitosa del archivo y su ID en Google Drive.
     """
     file_metadata = {'name': file_name}
     if folder_id:  # Si se proporciona un folder_id, lo usa para definir la carpeta de destino
@@ -32,8 +46,20 @@ def upload_file(service, file_name, mime_type, folder_id=None):
     file = service.files().create(body=file_metadata, media_body=media, fields='id').execute()
     print(f"Archivo {file_name} subido exitosamente con el ID: {file.get('id')}")
 
+# Estas funciones corresponden a la lógica de recuperar el vault de Drive, pero dio errores y al final no terminamos de implementarlo, además para que
+# fuera cómodo necesitamos manejar tokens lo que hacía la aplicación mucho mas insegura.
 def find_backup_file(service, file_name='vault.json'):
-    """Busca el archivo de copia de seguridad en Google Drive."""
+    """
+    Busca en Google Drive un archivo específico por nombre y devuelve su información si existe.
+
+    Args:
+        service (Resource): El objeto de servicio obtenido de authenticate_google_drive().
+        file_name (str): El nombre del archivo a buscar en Google Drive.
+
+    Returns:
+        dict: Información del primer archivo encontrado que coincide con el nombre dado.
+        None: Si no se encuentra ningún archivo.
+    """
     response = service.files().list(q=f"name='{file_name}'", spaces='drive', fields='files(id, name)').execute()
     files = response.get('files', [])
     if files:
@@ -41,7 +67,17 @@ def find_backup_file(service, file_name='vault.json'):
     return None
 
 def download_file(service, file_id, file_path):
-    """Descarga el archivo de Google Drive."""
+    """
+    Descarga un archivo específico de Google Drive y lo guarda en el sistema de archivos local.
+
+    Args:
+        service (Resource): El objeto de servicio obtenido de authenticate_google_drive().
+        file_id (str): El ID del archivo de Google Drive a descargar.
+        file_path (str): La ruta local donde se guardará el archivo descargado.
+
+    Prints:
+        El progreso de la descarga y un mensaje confirmando la descarga exitosa del archivo.
+    """
     request = service.files().get_media(fileId=file_id)
     fh = io.BytesIO()
     downloader = MediaIoBaseDownload(fh, request)
@@ -55,7 +91,18 @@ def download_file(service, file_id, file_path):
     print(f"Archivo descargado en {file_path}.")
 
 def recover_vault(service, file_id, file_path='vault.json'):
-    """Recupera el archivo de copia de seguridad y lo guarda en el sistema de archivos local."""
+    """
+    Recupera el archivo de copia de seguridad desde Google Drive usando su ID y lo carga en el sistema.
+
+    Args:
+        service (Resource): El objeto de servicio obtenido de authenticate_google_drive().
+        file_id (str): El ID del archivo de copia de seguridad en Google Drive.
+        file_path (str): La ruta local donde se guardará el archivo de copia de seguridad descargado.
+
+    Returns:
+        dict: Los datos del vault recuperados si la recuperación fue exitosa.
+        None: Si ocurre un error durante el proceso de recuperación.
+    """
     try:
         # Encontrar el archivo de copia de seguridad por ID y descargarlo
         print(f"Intentando descargar el archivo con ID: {file_id}")
