@@ -1,0 +1,3 @@
+Para los SQL injection se suele poner algo que se quiere ejecutar
+OR una verdad (como 1+1). Como la segunda parte es verdad, se ejecuta
+el SQL injection.
